@@ -12,6 +12,30 @@
         android:theme="@style/Theme.Project"
         tools:targetApi="31">
         <activity
+            android:name=".WorkersAccount"
+            android:exported="false" />
+        <activity
+            android:name=".CalendarWagesDisplay"
+            android:exported="false" />
+        <activity
+            android:name=".FuelEntry"
+            android:exported="false" />
+        <activity
+            android:name=".WagesEntry"
+            android:exported="false" />
+        <activity
+            android:name=".MaterialActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MaterialAccounts"
+            android:exported="false" />
+        <activity
+            android:name=".AccountsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CustomerActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name">

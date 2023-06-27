@@ -1,18 +1,21 @@
-package com.example.project.ui.dashboard;
-
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CalendarView;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
+package com.example.project;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-import com.example.project.Customer;
-import com.example.project.R;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatSpinner;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.CalendarView;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.example.project.databinding.FragmentDashboardBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -22,51 +25,43 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import androidx.appcompat.widget.AppCompatSpinner;
-
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import android.widget.CalendarView;
+import java.util.Calendar;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
-public class DashboardFragment extends Fragment implements View.OnClickListener {
+public class WagesEntry extends AppCompatActivity {
 
-    private FragmentDashboardBinding binding;
 
     LinearLayout layoutList;
+    TextView txt;
     Button buttonAdd;
     Button buttonSubmitList;
     public RadioGroup rg;
     RadioButton rb;
-    String d;
+    String d,type,fuel;
 
-
-
+    EditText et;
+    Calendar calendar;
+    CalendarView calendarView;
     List<String> itemList = new ArrayList<>();
     List<String> quanList=new ArrayList<>();
-   ArrayList<Customer> customersList = new ArrayList<>();
+    ArrayList<Customer> customersList = new ArrayList<>();
 
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        DashboardViewModel dashboardViewModel =
-                new ViewModelProvider(this).get(DashboardViewModel.class);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_wages_entry);
 
-        binding = FragmentDashboardBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
-
-        buttonAdd = (Button) root.findViewById(R.id.button_add);
-        buttonSubmitList = (Button) root.findViewById(R.id.button_submit_list);
-        layoutList = (LinearLayout) root.findViewById(R.id.layout_list);
-        buttonAdd.setOnClickListener(this);
-        rg = (RadioGroup) root.findViewById(R.id.radgroup);
-
-        buttonSubmitList.setOnClickListener(this);
-
+        buttonAdd = (Button)findViewById(R.id.button_add);
+        buttonSubmitList = (Button)findViewById(R.id.button_submit_list);
+        layoutList = (LinearLayout)findViewById(R.id.layout_list);
+        txt=(TextView)findViewById(R.id.text);
+        et=(EditText)findViewById(R.id.diesel);
+        calendarView=findViewById(R.id.calendarView);
         itemList.add(0,"Select Item");
         itemList.add("Sand");
         itemList.add("Bricks");
@@ -80,52 +75,45 @@ public class DashboardFragment extends Fragment implements View.OnClickListener 
         quanList.add("5");
         quanList.add("6");
 
-       // final TextView textView = binding.textDashboard;
-      //  dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
-        binding.calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+       // CalendarView.OnDateChangeListener(new CalendarView.OnDateChangeListener(){
+        // final TextView textView = binding.textDashboard;
+        //  dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+       calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView calendarView, int i, int i1, int i2) {
                 d=i2+"-"+(i1+1)+"-"+i;
-                binding.text.setText(d);
+                txt.setText(d);
+                type=d+" worker";
                 removeView();
 
             }
         });
 
-        return root;
+        buttonAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                addView();
+            }
+        });
+        buttonSubmitList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if(checkIfValidAndRead()) {
+                    Toast.makeText(WagesEntry.this, "Succuss", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        });
 
 
-    }
-    @Override
-    public void onClick(View v) {
 
-        switch (v.getId()){
-
-            case R.id.button_add:
-
-              addView();
-
-                break;
-            case R.id.button_submit_list:
-               if(checkIfValidAndRead()) {
-                   Toast.makeText(getContext(),"Succuss",Toast.LENGTH_LONG).show();
-                 //  Intent intent=new Intent(getContext(), CustomerDateEntry.class);
-               /*    Bundle bundle=new Bundle();
-                   bundle.putSerializable("list",customersList);
-                   intent.putExtras(bundle);*/
-                  // startActivity(intent);
-
-               }
-                break;
-
-
-        }
     }
 
     private boolean checkIfValidAndRead() {
+        fuel=et.getText().toString();
         customersList.clear();
         boolean result = true;
-
         for (int i = 0; i < layoutList.getChildCount(); i++) {
             View customerView = layoutList.getChildAt(i);
             EditText editCustomerName = (EditText) customerView.findViewById(R.id.edit_customer_name);
@@ -181,68 +169,84 @@ public class DashboardFragment extends Fragment implements View.OnClickListener 
             } else {
                 result = false;
             }
-            Toast.makeText(getContext(), customer.getCustomerName() + "-" + customer.getItemName() + "-" +
+            Toast.makeText(WagesEntry.this, customer.getCustomerName() + "-" + customer.getItemName() + "-" +
                     customer.getQuantity() + "-" + customer.getAmount() + "-" + customer.getStatus(), Toast.LENGTH_SHORT).show();
 
             HashMap<String, Object> hashMap = new HashMap<>();
             HashMap<String, Object> hashMap2 = new HashMap<>();
-
-            hashMap.put("Name",customer.getCustomerName());
+            HashMap<String, Object> hashMap3 = new HashMap<>();
+            hashMap.put("Name", customer.getCustomerName());
             hashMap.put("Item", customer.getItemName());
             hashMap.put("Quantity", customer.getQuantity());
             hashMap.put("Amount", customer.getAmount());
             hashMap.put("Status", customer.getStatus());
-            hashMap2.put("Date",d);
+            hashMap2.put("Date", d);
             hashMap2.put("Item", customer.getItemName());
             hashMap2.put("Quantity", customer.getQuantity());
             hashMap2.put("Amount", customer.getAmount());
             hashMap2.put("Status", customer.getStatus());
+            hashMap3.put("Fuel",fuel);
 
 
-            FirebaseFirestore.getInstance().collection(d).document().set(hashMap).addOnSuccessListener(new OnSuccessListener<Void>() {
+            FirebaseFirestore.getInstance().collection("Diesel").document(d).set(hashMap3).addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void unused) {
-                            Toast.makeText(getContext(), "Added to Firebase", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(WagesEntry.this, fuel, Toast.LENGTH_SHORT).show();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(getContext(), "Failed to add to Firebase", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(WagesEntry.this, "Failed to add fuel to Firebase", Toast.LENGTH_SHORT).show();
                         }
                     });
 
-        FirebaseFirestore.getInstance().collection(customer.getCustomerName()).document().set(hashMap2).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        Toast.makeText(getContext(), "Added to Firebase", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(getContext(), "Failed to add to Firebase", Toast.LENGTH_SHORT).show();
-                    }
-                });
+            FirebaseFirestore.getInstance().collection(type).document().set(hashMap).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            Toast.makeText(WagesEntry.this, "Added to Firebase", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(WagesEntry.this, "Failed to add to Firebase", Toast.LENGTH_SHORT).show();
+                        }
+                    });
 
-        customersList.add(customer);
-    }
+            FirebaseFirestore.getInstance().collection(customer.getCustomerName() + " worker").document().set(hashMap2).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            Toast.makeText(WagesEntry.this, "Added to Firebase", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(WagesEntry.this, "Failed to add to Firebase", Toast.LENGTH_SHORT).show();
+                        }
+                    });
 
-            if(customersList.size()==0){
-                result=false;
-                Toast.makeText(getContext(),"Add Customers First",Toast.LENGTH_SHORT).show();
-            }else if(!result){
-                Toast.makeText(getContext(),"Enter details Correctly",Toast.LENGTH_SHORT).show();
-            }
+            customersList.add(customer);
+        }
 
-        FirebaseFirestore.getInstance().collection(d).addSnapshotListener(new EventListener<QuerySnapshot>() {
+        if (customersList.size() == 0) {
+            result = false;
+            Toast.makeText(WagesEntry.this, "Add Customers First", Toast.LENGTH_SHORT).show();
+        } else if (!result) {
+            Toast.makeText(WagesEntry.this, "Enter details Correctly", Toast.LENGTH_SHORT).show();
+        }
+
+        FirebaseFirestore.getInstance().collection(type).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
-            public void onEvent(QuerySnapshot documentSnapshots,FirebaseFirestoreException error) {
-                for(DocumentSnapshot snapshot : documentSnapshots){
-                    Toast.makeText(getContext(), snapshot.getString("Name") +snapshot.getString("Item") +snapshot.getString("Quantity"),Toast.LENGTH_SHORT).show();
+            public void onEvent(QuerySnapshot documentSnapshots, FirebaseFirestoreException error) {
+                for (DocumentSnapshot snapshot : documentSnapshots) {
+                    Toast.makeText(WagesEntry.this, snapshot.getString("Name") + snapshot.getString("Item") + snapshot.getString("Quantity"), Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
+
         return result;
     }
 
@@ -287,13 +291,12 @@ public class DashboardFragment extends Fragment implements View.OnClickListener 
             }
         }
     };
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
-    }
+
 
     private void removeView(){
         layoutList.removeAllViews();
     }
 }
+
+
+
